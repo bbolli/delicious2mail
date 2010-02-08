@@ -1,0 +1,4 @@
+del2mail is a delicious.com to email gateway
+
+It is intended to be run hourly. All new links with a specific
+tag are mailed to an address, in our case a mailing list.

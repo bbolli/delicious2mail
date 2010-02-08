@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+
+# configuration
+USER = ''
+TAG = 'geekinfo.ch'
+MAIL_SERVER = 'localhost'
+RECIPIENTS = ['members@geekinfo.ch']
+SENDER = 'bbolli@ewanet.ch', 'Delicious - Geekinfo gateway'
+
+
+import simplejson
+import urllib
+import smtplib
+from email.mime.text import MIMEText
+
+
+class DeliciousToMail(object):
+
+    def __init__(self):
+        self.db_file = '/var/local/del2mail.latest'
+        try:
+            self.latest = open(self.db_file).read()
+        except (IOError, OSError):
+            self.latest = '2000-01-01'
+
+    def __del__(self):
+        open(self.db_file, 'w').write(self.latest)
+
+    def get_links(self):
+        url = 'http://feeds.delicious.com/v2/json/%s/%s' % (USER or 'tag', TAG)
+        links = simplejson.loads(urllib.urlopen(url).read())
+        return [l for l in links if l['dt'] > self.latest]
+
+    def mail_link(self, link):
+        link['n'] = link.get('n') and '\n' + link['n'] + '\n' or ''
+        body = u"""%(u)s -- %(d)s
+%(n)s
+Mehr Links von %(a)s: http://delicious.com/%(a)s
+""" % link
+
+        msg = MIMEText(body.encode('utf-8'))
+        msg.set_charset('utf-8')
+        msg['Subject'] = 'Link von Delicious.com'
+        msg['From'] = '%s (%s)' % SENDER
+        msg['To'] = ', '.join(RECIPIENTS)
+
+        self.smtp.sendmail(SENDER[0], RECIPIENTS, msg.as_string())
+
+    def run(self):
+        links = self.get_links()
+        if not links:
+            return
+
+        self.smtp = smtplib.SMTP(MAIL_SERVER)
+        for link in links:
+            self.mail_link(link)
+        self.smtp.quit()
+        self.latest = max(l['dt'] for l in links)
+
+
+if __name__ == '__main__':
+    DeliciousToMail().run()

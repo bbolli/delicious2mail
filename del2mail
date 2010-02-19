@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+# encoding: utf-8
 
 # configuration
 USER = ''
 TAG = 'geekinfo.ch'
 MAIL_SERVER = 'localhost'
 RECIPIENTS = ['members@geekinfo.ch']
-SENDER = 'bbolli@ewanet.ch', 'Delicious - Geekinfo gateway'
+SENDER = RECIPIENTS[0]
 
 
 import simplejson
@@ -31,30 +32,34 @@ class DeliciousToMail(object):
         links = simplejson.loads(urllib.urlopen(url).read())
         return [l for l in links if l['dt'] > self.latest]
 
-    def mail_link(self, link):
+    def mail_link(self, link, smtp):
         link['n'] = link.get('n') and '\n' + link['n'] + '\n' or ''
-        body = u"""%(u)s -- %(d)s
+        body = u"""%(u)s
 %(n)s
+-- 
 Mehr Links von %(a)s: http://delicious.com/%(a)s
 """ % link
 
         msg = MIMEText(body.encode('utf-8'))
         msg.set_charset('utf-8')
-        msg['Subject'] = 'Link von Delicious.com'
-        msg['From'] = '%s (%s)' % SENDER
+        msg['Subject'] = link['d']
+        msg['From'] = '%s (%s)' % (SENDER, link['a'])
         msg['To'] = ', '.join(RECIPIENTS)
 
-        self.smtp.sendmail(SENDER[0], RECIPIENTS, msg.as_string())
+        smtp.sendmail(SENDER, RECIPIENTS, msg.as_string())
 
     def run(self):
         links = self.get_links()
         if not links:
             return
 
-        self.smtp = smtplib.SMTP(MAIL_SERVER)
+        smtp = smtplib.SMTP(MAIL_SERVER)
         for link in links:
-            self.mail_link(link)
-        self.smtp.quit()
+            try:
+                self.mail_link(link, smtp)
+            except Exception, e:
+                print e, link
+        smtp.quit()
         self.latest = max(l['dt'] for l in links)
 
 

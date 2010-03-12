@@ -6,7 +6,7 @@ USER = ''
 TAG = 'geekinfo.ch'
 MAIL_SERVER = 'localhost'
 RECIPIENTS = ['members@geekinfo.ch']
-SENDER = RECIPIENTS[0]
+SENDER = 'bbolli@ewanet.ch'
 
 
 import simplejson

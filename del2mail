@@ -32,7 +32,7 @@ class DeliciousToMail(object):
         links = simplejson.loads(urllib.urlopen(url).read())
         return [l for l in links if l['dt'] > self.latest]
 
-    def mail_link(self, link, smtp):
+    def make_mail(self, link):
         link['n'] = link.get('n') and '\n' + link['n'] + '\n' or ''
         body = u"""%(u)s
 %(n)s
@@ -46,7 +46,7 @@ Mehr Links von %(a)s: http://delicious.com/%(a)s
         msg['From'] = '%s (%s)' % (SENDER, link['a'])
         msg['To'] = ', '.join(RECIPIENTS)
 
-        smtp.sendmail(SENDER, RECIPIENTS, msg.as_string())
+        return msg.as_string()
 
     def run(self):
         links = self.get_links()
@@ -56,7 +56,7 @@ Mehr Links von %(a)s: http://delicious.com/%(a)s
         smtp = smtplib.SMTP(MAIL_SERVER)
         for link in links:
             try:
-                self.mail_link(link, smtp)
+                smtp.sendmail(SENDER, RECIPIENTS, self.make_mail(link))
             except Exception, e:
                 print e, link
         smtp.quit()

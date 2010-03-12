@@ -13,8 +13,9 @@ The first few lines of the del2mail script contain its configuration:
 * `TAG`: the tag the links must have
 * `MAIL_SERVER`: the name or IP address of the SMTP server
 * `RECIPIENTS`: a list of mail recipients
-* `SENDER`: a (address, name) 2-tuple of the sender. If the mail goes to a mailing list,
-  make sure that the sender is allowed to send to the list.
+* `SENDER`: the mail address of the sender. If the mail goes to a mailing list,
+  make sure that the sender is allowed to send to the list. The name of the
+  sender will always be the delicious.com user name of the link submitter.
 
 The script writes to `/var/local`, so make sure that the user
 as which the script runs has write permissions there.

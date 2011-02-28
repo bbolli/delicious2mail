@@ -9,7 +9,11 @@ RECIPIENTS = ['members@geekinfo.ch']
 SENDER = 'bbolli@ewanet.ch'
 
 
-import simplejson
+try:
+    import json
+except ImportError:
+    # Python 2.5 and earlier need this package
+    import simplejson as json
 import urllib
 import smtplib
 from email.mime.text import MIMEText
@@ -29,7 +33,7 @@ class DeliciousToMail(object):
 
     def get_links(self):
         url = 'http://feeds.delicious.com/v2/json/%s/%s' % (USER or 'tag', TAG)
-        links = simplejson.loads(urllib.urlopen(url).read())
+        links = json.loads(urllib.urlopen(url).read())
         return [l for l in links if l['dt'] > self.latest]
 
     def make_mail(self, link):

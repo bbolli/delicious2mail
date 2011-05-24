@@ -37,32 +37,31 @@ class DeliciousToMail(object):
         return [l for l in links if l['dt'] > self.latest]
 
     def make_mail(self, link):
-        link['n'] = link.get('n') and '\n' + link['n'] + '\n' or ''
-        body = u"""%(u)s
+        link['n'] = link.get('n') and '\n' + link['n'] + '\n\n' or ''
+        return u"""* %(d)s: %(u)s
 %(n)s
--- 
-Mehr Links von %(a)s: http://delicious.com/%(a)s
 """ % link
-
-        msg = MIMEText(body.encode('utf-8'))
-        msg.set_charset('utf-8')
-        msg['Subject'] = link['d']
-        msg['From'] = '%s (%s)' % (SENDER, link['a'])
-        msg['To'] = ', '.join(RECIPIENTS)
-
-        return msg.as_string()
 
     def run(self):
         links = self.get_links()
         if not links:
             return
 
+        user = links[0]['a']
+        body = (''.join(self.make_mail(l) for l in links)).strip() + """
+
+-- 
+Mehr Links von mir: http://delicious.com/%s
+""" % user
+
+        msg = MIMEText(body.encode('utf-8'))
+        msg.set_charset('utf-8')
+        msg['Subject'] = "Neuste Links"
+        msg['From'] = '%s (%s)' % (SENDER, user)
+        msg['To'] = ', '.join(RECIPIENTS)
+
         smtp = smtplib.SMTP(MAIL_SERVER)
-        for link in links:
-            try:
-                smtp.sendmail(SENDER, RECIPIENTS, self.make_mail(link))
-            except Exception, e:
-                print e, link
+        smtp.sendmail(SENDER, RECIPIENTS, msg.as_string())
         smtp.quit()
         self.latest = max(l['dt'] for l in links)
 

@@ -16,6 +16,7 @@ except ImportError:
     import simplejson as json
 import urllib
 import smtplib
+import textwrap
 from email.mime.text import MIMEText
 
 
@@ -27,6 +28,10 @@ class DeliciousToMail(object):
             self.latest = open(self.db_file).read()
         except (IOError, OSError):
             self.latest = '2000-01-01'
+        self.lw = textwrap.TextWrapper(initial_indent='* ', subsequent_indent='  ',
+            break_long_words=False, break_on_hyphens=False
+        )
+        self.tw = textwrap.TextWrapper(initial_indent='  ', subsequent_indent='  ')
 
     def __del__(self):
         open(self.db_file, 'w').write(self.latest)
@@ -37,10 +42,10 @@ class DeliciousToMail(object):
         return [l for l in links if l['dt'] > self.latest]
 
     def make_mail(self, link):
-        link['n'] = link.get('n') and '\n' + link['n'] + '\n\n' or ''
-        return u"""* %(d)s: %(u)s
-%(n)s
-""" % link
+        mail = self.lw.fill('%(d)s: %(u)s' % link)
+        if link.get('n'):
+            mail += '\n\n' + self.tw.fill(link['n'])
+        return mail
 
     def run(self):
         links = self.get_links()
@@ -48,7 +53,7 @@ class DeliciousToMail(object):
             return
 
         user = links[0]['a']
-        body = (''.join(self.make_mail(l) for l in links)).strip() + """
+        body = ('\n\n'.join(self.make_mail(l) for l in links)).strip() + """
 
 -- 
 Mehr Links von mir: http://delicious.com/%s

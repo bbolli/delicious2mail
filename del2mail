@@ -52,6 +52,10 @@ class DeliciousToMail(object):
         if not links:
             return
 
+        if 'a' not in links[0]:
+            print links
+            return
+
         user = links[0]['a']
         body = ('\n\n'.join(self.make_mail(l) for l in links)).strip() + """
 
